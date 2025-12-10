@@ -1,9 +1,18 @@
+mod adb;
+mod commands;
+
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_sql::Builder::default().build())
+    .invoke_handler(tauri::generate_handler![
+      commands::tauri_list_devices,
+      commands::tauri_list_apps,
+      commands::tauri_get_metrics,
+      commands::tauri_set_adb_path
+    ])
     .setup(|app| {
       if let Some(window) = app.get_webview_window("main") {
         #[cfg(target_os = "macos")]
