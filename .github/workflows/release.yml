@@ -1,0 +1,93 @@
+name: release
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute patch version
+        id: bump
+        run: |
+          pkg="apps/desktop/package.json"
+          ver=$(jq -r '.version' "$pkg")
+          IFS='.' read -r major minor patch <<<"$ver"
+          patch=$((patch + 1))
+          next="$major.$minor.$patch"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "Next version: $next"
+
+          # Update package.json with new version
+          jq --arg new_version "$next" '.version = $new_version' "$pkg" > tmp.json && mv tmp.json "$pkg"
+
+          # Update tauri.conf.json with new version
+          tauri_conf="apps/desktop/src-tauri/tauri.conf.json"
+          jq --arg new_version "$next" '.version = $new_version' "$tauri_conf" > tmp.json && mv tmp.json "$tauri_conf"
+
+  build:
+    needs: prepare
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (tauri)
+        working-directory: apps/desktop
+        env:
+          TAURI_BUILD_VERSION: ${{ env.VERSION }}
+          TAURI_BUILD_NUMBER: ${{ github.run_number }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm tauri build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.os }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**/*
+          if-no-files-found: error
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: v${{ needs.prepare.outputs.version }}
+          files: dist/**/*
