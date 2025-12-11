@@ -33,38 +33,35 @@ pub fn run() {
         }
       }
 
-      // 添加开发者工具菜单（开发版本或设置了DEVTOOLS环境变量）
-      let enable_devtools = cfg!(debug_assertions) ||
-        std::env::var("DEVTOOLS").map(|v| v == "true").unwrap_or(false);
-
-      if enable_devtools {
-          let app_handle = app.handle().clone();
-          app.set_menu(Some(tauri::Menu::new()
-            .add_submenu(tauri::Submenu::new("开发", tauri::Menu::new()
-              .add_item(tauri::CustomMenuItem::new("devtools", "打开开发者工具")
-                .accelerator("F12"))
-              .add_item(tauri::CustomMenuItem::new("reload", "重新加载")
-                .accelerator("CmdOrCtrl+R"))
-            ))
-          ))?;
-
-          app.on_menu_event(move |event| {
-            match event.menu_item_id() {
-              "devtools" => {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                  let _ = window.open_devtools();
-                }
-              }
-              "reload" => {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                  let _ = window.eval("window.location.reload()");
-                }
-              }
-              _ => {}
-            }
-          });
-        }
-      }
+      // TODO: 添加开发者工具菜单（暂时注释以修复CI编译）
+      // let enable_devtools = cfg!(debug_assertions) ||
+      //   std::env::var("DEVTOOLS").map(|v| v == "true").unwrap_or(false);
+      //
+      // if enable_devtools {
+      //   let devtools_item = MenuItem::with_id(app, "devtools", "打开开发者工具", true, Some("F12"))?;
+      //   let reload_item = MenuItem::with_id(app, "reload", "重新加载", true, Some("CmdOrCtrl+R"))?;
+      //
+      //   let dev_menu = Submenu::with_items(app, "开发", true, &[&devtools_item, &reload_item])?;
+      //   let menu = Menu::with_items(app, &[&dev_menu])?;
+      //
+      //   app.set_menu(menu)?;
+      //
+      //   app.on_menu_event(|app, event| {
+      //     match event.id().as_ref() {
+      //       "devtools" => {
+      //         if let Some(window) = app.get_webview_window("main") {
+      //           let _ = window.open_devtools();
+      //         }
+      //       }
+      //       "reload" => {
+      //         if let Some(window) = app.get_webview_window("main") {
+      //           let _ = window.eval("window.location.reload()");
+      //         }
+      //       }
+      //       _ => {}
+      //     }
+      //   });
+      // }
 
       Ok(())
     })
