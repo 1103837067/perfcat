@@ -82,10 +82,17 @@ jobs:
     needs: [prepare, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download macOS artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          name: bundle-macos-latest
+          path: dist/macos
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bundle-windows-latest
+          path: dist/windows
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -94,4 +101,8 @@ jobs:
         with:
           tag_name: v${{ needs.prepare.outputs.version }}
           name: v${{ needs.prepare.outputs.version }}
-          files: dist/**/*
+          files: |
+            dist/macos/*.dmg
+            dist/macos/*.app
+            dist/windows/*.exe
+            dist/windows/*.msi
