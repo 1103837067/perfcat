@@ -34,3 +34,4 @@ export async function setAdbPath(path?: string) {
   return invoke<void>("tauri_set_adb_path", { path })
 }
 
+

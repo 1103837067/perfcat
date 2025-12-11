@@ -7,6 +7,11 @@ use tauri::Manager;
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_sql::Builder::default().build())
+    .plugin(
+      tauri_plugin_log::Builder::default()
+        .level(log::LevelFilter::Info)
+        .build(),
+    )
     .invoke_handler(tauri::generate_handler![
       commands::tauri_list_devices,
       commands::tauri_list_apps,
@@ -20,7 +25,7 @@ pub fn run() {
           // macOS: 使用 Overlay 样式，保留原生按钮
           let _ = window.set_title_bar_style(tauri::TitleBarStyle::Overlay);
         }
-        
+
         #[cfg(target_os = "windows")]
         {
           // Windows: 禁用原生装饰，使用自定义标题栏
@@ -28,12 +33,39 @@ pub fn run() {
         }
       }
 
-      // 在所有构建中启用日志，包括生产版本
-      app.handle().plugin(
-        tauri_plugin_log::Builder::default()
-          .level(log::LevelFilter::Info)
-          .build(),
-      )?;
+      // 添加开发者工具菜单（开发版本或设置了DEVTOOLS环境变量）
+      let enable_devtools = cfg!(debug_assertions) ||
+        std::env::var("DEVTOOLS").map(|v| v == "true").unwrap_or(false);
+
+      if enable_devtools {
+          let app_handle = app.handle().clone();
+          app.set_menu(Some(tauri::Menu::new()
+            .add_submenu(tauri::Submenu::new("开发", tauri::Menu::new()
+              .add_item(tauri::CustomMenuItem::new("devtools", "打开开发者工具")
+                .accelerator("F12"))
+              .add_item(tauri::CustomMenuItem::new("reload", "重新加载")
+                .accelerator("CmdOrCtrl+R"))
+            ))
+          ))?;
+
+          app.on_menu_event(move |event| {
+            match event.menu_item_id() {
+              "devtools" => {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                  let _ = window.open_devtools();
+                }
+              }
+              "reload" => {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                  let _ = window.eval("window.location.reload()");
+                }
+              }
+              _ => {}
+            }
+          });
+        }
+      }
+
       Ok(())
     })
     .run(tauri::generate_context!())

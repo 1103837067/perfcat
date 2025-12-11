@@ -25,3 +25,4 @@ pub struct AppInfo {
   pub label: Option<String>,
 }
 
+

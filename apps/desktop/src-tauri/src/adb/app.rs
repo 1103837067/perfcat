@@ -23,3 +23,4 @@ pub fn list_apps(device_id: &str, keyword: Option<&str>) -> Result<Vec<AppInfo>>
   Ok(apps)
 }
 
+

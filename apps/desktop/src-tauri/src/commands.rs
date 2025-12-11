@@ -37,7 +37,7 @@ pub async fn tauri_list_devices() -> Result<Vec<DeviceInfo>, String> {
       }
     }
   })
-  .await
+    .await
   .map_err(|e| format!("异步执行错误: {}", e.to_string()))?
   .map_err(|e| format!("ADB错误: {}", e.to_string()))
 }
