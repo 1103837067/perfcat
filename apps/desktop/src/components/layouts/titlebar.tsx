@@ -10,10 +10,15 @@ const appWindow = getCurrentWindow()
 export function TitleBar() {
   const [platform, setPlatform] = useState<"macos" | "windows" | "linux">("macos")
   const { theme, setTheme, selectedDevice } = useAppStore()
+  const version = __APP_VERSION__
 
   useEffect(() => {
     getPlatform().then(setPlatform)
   }, [])
+
+  useEffect(() => {
+    appWindow.setTitle(`PerfX v${version}`)
+  }, [version])
 
   useEffect(() => {
     const root = document.documentElement
@@ -47,9 +52,7 @@ export function TitleBar() {
     return "bg-amber-500"
   })()
 
-  const deviceLabel = selectedDevice
-    ? selectedDevice.model ?? selectedDevice.id
-    : "未选择设备"
+  const deviceLabel = selectedDevice ? (selectedDevice.model ?? selectedDevice.id) : "未选择设备"
 
   return (
     <div
@@ -61,7 +64,7 @@ export function TitleBar() {
 
       {/* 中间：应用名称 - 整个区域可拖动 */}
       <div data-tauri-drag-region className="flex flex-1 items-center gap-3 pl-4 pr-2">
-        <span className="text-sm font-semibold pointer-events-none select-none">PerfCat</span>
+        <span className="text-sm font-semibold pointer-events-none select-none">PerfX</span>
         <div className="pointer-events-none select-none flex items-center gap-2 rounded-full bg-muted/60 px-2 py-1">
           <span className={`h-2.5 w-2.5 rounded-full ${deviceStateClass}`} />
           <span className="text-xs text-foreground/80">
@@ -73,6 +76,7 @@ export function TitleBar() {
 
       {/* 右侧：操作按钮和 Windows 窗口控制按钮 */}
       <div className="flex items-center gap-1.5 pr-2" data-tauri-drag-region="no-drag">
+        <span className="mr-1 text-xs text-foreground/60 select-none">v{version}</span>
         <Button
           variant="ghost"
           size="icon-sm"

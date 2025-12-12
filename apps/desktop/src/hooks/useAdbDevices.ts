@@ -29,9 +29,8 @@ export function useAdbDevices() {
     if (!search.trim()) return devices
     const keyword = search.trim().toLowerCase()
     return devices.filter(
-      (d) =>
-        d.id.toLowerCase().includes(keyword) ||
-        (d.model?.toLowerCase().includes(keyword) ?? false)
+      d =>
+        d.id.toLowerCase().includes(keyword) || (d.model?.toLowerCase().includes(keyword) ?? false)
     )
   }, [devices, search])
 
@@ -45,5 +44,3 @@ export function useAdbDevices() {
     refresh,
   }
 }
-
-

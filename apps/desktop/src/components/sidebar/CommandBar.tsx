@@ -1,11 +1,7 @@
 import { Button } from "@/components/ui/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Play, Square, Settings } from "lucide-react"
-import { useRef } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 
 interface Props {
   disabled: boolean
@@ -17,10 +13,18 @@ interface Props {
 
 export function CommandBar({ disabled, running, onStart, onStop, metricSelector }: Props) {
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+  const [triggerWidth, setTriggerWidth] = useState<number>()
+
+  useLayoutEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTriggerWidth(triggerRef.current?.offsetWidth)
+  }, [open])
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             ref={triggerRef}
@@ -36,7 +40,9 @@ export function CommandBar({ disabled, running, onStart, onStop, metricSelector 
         <PopoverContent
           className="p-3"
           align="end"
-          style={{ width: triggerRef.current?.offsetWidth ? triggerRef.current.offsetWidth * 3 : 240 }}
+          style={{
+            width: triggerWidth ? triggerWidth * 3 : 240,
+          }}
         >
           {metricSelector ?? <div className="text-sm text-muted-foreground">请选择性能参数</div>}
         </PopoverContent>
@@ -55,5 +61,3 @@ export function CommandBar({ disabled, running, onStart, onStop, metricSelector 
     </div>
   )
 }
-
-

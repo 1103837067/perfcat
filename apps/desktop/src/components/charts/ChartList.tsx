@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import {
   createContext,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
@@ -33,7 +34,7 @@ type ChartListContextValue = {
 
 const ChartListContext = createContext<ChartListContextValue | null>(null)
 
-export function useChartList() {
+function useChartList() {
   const ctx = useContext(ChartListContext)
   if (!ctx) throw new Error("useChartList must be used inside <ChartList />")
   return ctx
@@ -48,7 +49,15 @@ export function ChartList({
   initialBrush?: BrushState
   onDraggingChange?: (dragging: boolean) => void
 }) {
-  const [brush, setBrush] = useState<BrushState>(initialBrush ?? { start: 0, end: 100 })
+  const clampBrush = useCallback((state: BrushState) => {
+    const start = Math.max(0, Math.min(state.start, 100))
+    const end = Math.max(start, Math.min(state.end, 100))
+    return { start, end }
+  }, [])
+
+  const [brush, setBrush] = useState<BrushState>(() =>
+    clampBrush(initialBrush ?? { start: 0, end: 100 })
+  )
   const [dragging, setDragging] = useState(false)
 
   useEffect(() => {
@@ -68,7 +77,7 @@ export function ChartList({
         <AnimatePresence mode="popLayout">
           {childArray.map((child, index) => (
             <motion.div
-              key={(child as any)?.key ?? index}
+              key={isValidElement(child) && child.key != null ? child.key : index}
               layout
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -124,6 +133,7 @@ export function ChartItem({
     if (draggingRef.current) {
       pendingDataRef.current = data
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayData(data)
     }
   }, [data])
@@ -131,7 +141,8 @@ export function ChartItem({
   const brushIndexRange = useMemo(() => {
     const maxIndex = Math.max(displayData.length - 1, 0)
     if (maxIndex <= 0) return { startIndex: 0, endIndex: 0 }
-    const toIndex = (pct: number) => Math.max(0, Math.min(maxIndex, Math.round((pct / 100) * maxIndex)))
+    const toIndex = (pct: number) =>
+      Math.max(0, Math.min(maxIndex, Math.round((pct / 100) * maxIndex)))
     return {
       startIndex: toIndex(brush.start),
       endIndex: toIndex(brush.end),
@@ -147,20 +158,34 @@ export function ChartItem({
 
   const stats = useMemo(
     () =>
-      lines.map((line) => {
+      lines.map(line => {
         const values = visibleData
-          .map((item) => item[line.dataKey])
-          .filter((v) => typeof v === "number" && Number.isFinite(v)) as number[]
+          .map(item => item[line.dataKey])
+          .filter(v => typeof v === "number" && Number.isFinite(v)) as number[]
 
         if (!values.length) {
-          return { key: line.dataKey, label: line.label, color: line.color, max: null, min: null, avg: null }
+          return {
+            key: line.dataKey,
+            label: line.label,
+            color: line.color,
+            max: null,
+            min: null,
+            avg: null,
+          }
         }
 
         const max = Math.max(...values)
         const min = Math.min(...values)
         const avg = values.reduce((sum, v) => sum + v, 0) / values.length
 
-        return { key: line.dataKey, label: line.label, color: line.color, max, min, avg }
+        return {
+          key: line.dataKey,
+          label: line.label,
+          color: line.color,
+          max,
+          min,
+          avg,
+        }
       }),
     [lines, visibleData]
   )
@@ -170,19 +195,6 @@ export function ChartItem({
     if (Math.abs(value) >= 100) return value.toFixed(0)
     return value.toFixed(1)
   }, [])
-
-  useEffect(() => {
-    // 如果数据长度变小导致刷选越界，做一次修正
-    if (draggingRef.current) return
-    const maxIndex = Math.max(displayData.length - 1, 0)
-    if (maxIndex <= 0) return
-    // clamp percent based on current maxIndex
-    const pctStart = Math.max(0, Math.min(brush.start, 100))
-    const pctEnd = Math.max(pctStart, Math.min(brush.end, 100))
-    if (pctStart !== brush.start || pctEnd !== brush.end) {
-      setBrush({ start: pctStart, end: pctEnd })
-    }
-  }, [brush.start, brush.end, displayData.length, setBrush])
 
   const handleBrushChange = useCallback(
     (next: { startIndex?: number; endIndex?: number }) => {
@@ -203,7 +215,7 @@ export function ChartItem({
       const toPct = (idx: number) => Math.max(0, Math.min(100, (idx / maxIndex) * 100))
       setBrush({ start: toPct(next.startIndex), end: toPct(next.endIndex) })
     },
-    [displayData.length, setBrush]
+    [displayData.length, setBrush, setDragging]
   )
 
   const config = useMemo(
@@ -224,7 +236,7 @@ export function ChartItem({
             <span>{title}</span>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-            {stats.map((stat) => (
+            {stats.map(stat => (
               <div key={stat.key} className="flex items-center gap-1">
                 <span
                   className="inline-flex h-2 w-2 rounded-full"
@@ -232,7 +244,8 @@ export function ChartItem({
                 />
                 <span className="text-xs text-foreground/80">{stat.label}</span>
                 <span className="font-medium text-foreground/80">
-                  max {formatNumber(stat.max)} / avg {formatNumber(stat.avg)} / min {formatNumber(stat.min)}
+                  max {formatNumber(stat.max)} / avg {formatNumber(stat.avg)} / min{" "}
+                  {formatNumber(stat.min)}
                 </span>
               </div>
             ))}
@@ -250,7 +263,7 @@ export function ChartItem({
           <YAxis tickLine={false} axisLine={false} domain={yDomain} />
           <ChartTooltip content={<ChartTooltipContent hideLabel />} />
           <ChartLegend content={<ChartLegendContent />} />
-          {lines.map((line) => (
+          {lines.map(line => (
             <Area
               key={line.dataKey}
               dataKey={line.dataKey}
@@ -278,4 +291,3 @@ export function ChartItem({
     </div>
   )
 }
-

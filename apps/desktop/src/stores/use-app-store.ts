@@ -1,5 +1,4 @@
 import { create } from "zustand"
-
 import type { AdbDevice } from "@/types/adb"
 
 interface AppState {
@@ -9,9 +8,9 @@ interface AppState {
   setSelectedDevice: (device: AdbDevice | null) => void
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>(set => ({
   theme: "light",
-  setTheme: (theme) => set({ theme }),
+  setTheme: theme => set({ theme }),
   selectedDevice: null,
-  setSelectedDevice: (device) => set({ selectedDevice: device }),
+  setSelectedDevice: device => set({ selectedDevice: device }),
 }))

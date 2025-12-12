@@ -18,7 +18,7 @@ interface Props {
 export function MetricSelector({ value, onChange, disabled }: Props) {
   const toggle = (metric: MetricKey) => {
     if (value.includes(metric)) {
-      onChange(value.filter((m) => m !== metric))
+      onChange(value.filter(m => m !== metric))
     } else {
       onChange([...value, metric])
     }
@@ -28,7 +28,7 @@ export function MetricSelector({ value, onChange, disabled }: Props) {
     <div className="space-y-2 text-sm">
       <div className="text-sm font-medium">性能参数选择</div>
       <div className="rounded-md border">
-        {OPTIONS.map((opt) => {
+        {OPTIONS.map(opt => {
           const active = value.includes(opt.value)
           return (
             <button
@@ -51,5 +51,3 @@ export function MetricSelector({ value, onChange, disabled }: Props) {
     </div>
   )
 }
-
-

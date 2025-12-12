@@ -12,9 +12,9 @@ import { Cpu, Gauge, Zap, Database, ArrowUpDown } from "lucide-react"
 const METRIC_KEYS: MetricKey[] = ["cpu", "memory", "power", "traffic", "fps"]
 const DEFAULT_METRICS: MetricKey[] = ["cpu"]
 const STORAGE_KEYS = {
-  device: "perfcat:selected_device",
-  app: "perfcat:selected_app",
-  metrics: "perfcat:selected_metrics",
+  device: "PerfX:selected_device",
+  app: "PerfX:selected_app",
+  metrics: "PerfX:selected_metrics",
 }
 
 function readStoredDevice() {
@@ -34,7 +34,9 @@ function readStoredMetrics(): MetricKey[] {
     if (!saved) return DEFAULT_METRICS
     const parsed = JSON.parse(saved)
     if (Array.isArray(parsed)) {
-      const valid = parsed.filter((m: string): m is MetricKey => METRIC_KEYS.includes(m as MetricKey))
+      const valid = parsed.filter((m: string): m is MetricKey =>
+        METRIC_KEYS.includes(m as MetricKey)
+      )
       if (valid.length) return valid
     }
   } catch {
@@ -84,7 +86,9 @@ export function HomePage() {
   useEffect(() => {
     const prev = prevDeviceRef.current
     if (prev !== null && prev !== selectedDevice) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedApp("")
+
       setAppSearch("")
     }
     if (selectedDevice) {
@@ -125,6 +129,7 @@ export function HomePage() {
   // 监控开始时重置时间与历史
   useEffect(() => {
     if (running) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHistory([])
       lastValuesRef.current = {}
     }
@@ -145,8 +150,10 @@ export function HomePage() {
     // 更新最新值（有值才覆盖）
     if (metrics.fps !== null && metrics.fps !== undefined) lastValuesRef.current.fps = metrics.fps
     if (metrics.cpu !== null && metrics.cpu !== undefined) lastValuesRef.current.cpu = metrics.cpu
-    if (metrics.power !== null && metrics.power !== undefined) lastValuesRef.current.power = metrics.power
-    if (metrics.memory_mb !== null && metrics.memory_mb !== undefined) lastValuesRef.current.memory = metrics.memory_mb
+    if (metrics.power !== null && metrics.power !== undefined)
+      lastValuesRef.current.power = metrics.power
+    if (metrics.memory_mb !== null && metrics.memory_mb !== undefined)
+      lastValuesRef.current.memory = metrics.memory_mb
     if (metrics.battery_level !== null && metrics.battery_level !== undefined)
       lastValuesRef.current.battery = metrics.battery_level
     if (metrics.battery_temp_c !== null && metrics.battery_temp_c !== undefined)
@@ -161,20 +168,16 @@ export function HomePage() {
     if (rxKbps !== undefined) lastValuesRef.current.traffic_rx = rxKbps
     if (txKbps !== undefined) lastValuesRef.current.traffic_tx = txKbps
 
-    const {
-      fps,
-      cpu,
-      power,
-      memory,
-      battery,
-      battery_temp,
-      traffic_rx,
-      traffic_tx,
-    } = lastValuesRef.current
+    const { fps, cpu, power, memory, battery, battery_temp, traffic_rx, traffic_tx } =
+      lastValuesRef.current
 
     // 仅当至少有一个有效值时记录
-    if ([fps, cpu, power, memory, battery, battery_temp, traffic_rx, traffic_tx].some((v) => v !== undefined)) {
-      setHistory((prev) =>
+    if (
+      [fps, cpu, power, memory, battery, battery_temp, traffic_rx, traffic_tx].some(
+        v => v !== undefined
+      )
+    ) {
+      setHistory(prev =>
         [
           ...prev,
           {
@@ -197,7 +200,7 @@ export function HomePage() {
 
   // 同步所选设备信息到全局，以便标题栏展示
   useEffect(() => {
-    const device = devices.find((item) => item.id === selectedDevice) ?? null
+    const device = devices.find(item => item.id === selectedDevice) ?? null
     setSelectedDeviceInStore(device)
   }, [devices, selectedDevice, setSelectedDeviceInStore])
 
@@ -208,7 +211,7 @@ export function HomePage() {
         devices={devices}
         deviceSearch={deviceSearch}
         loadingDevices={loadingDevices}
-        onDeviceChange={(value) => {
+        onDeviceChange={value => {
           setSelectedDevice(value)
           refreshDevices()
         }}

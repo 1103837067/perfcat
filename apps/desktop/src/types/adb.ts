@@ -46,5 +46,3 @@ export interface MetricsSnapshot {
   frame_stats?: FrameStats | null
   raw?: string | null
 }
-
-

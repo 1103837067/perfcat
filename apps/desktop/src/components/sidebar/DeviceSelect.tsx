@@ -7,13 +7,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Smartphone } from "lucide-react"
-import { useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import type { AdbDevice } from "@/types/adb"
 
 interface Props {
@@ -37,6 +33,13 @@ export function DeviceSelect({
 }: Props) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const [triggerWidth, setTriggerWidth] = useState<number>()
+
+  useLayoutEffect(() => {
+    if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTriggerWidth(triggerRef.current?.offsetWidth)
+  }, [open])
 
   const selectedDevice = devices.find(device => device.id === value)
   const titleText = selectedDevice
@@ -47,7 +50,7 @@ export function DeviceSelect({
     <div className="space-y-2">
       <Popover
         open={open}
-        onOpenChange={(newOpen) => {
+        onOpenChange={newOpen => {
           setOpen(newOpen)
           if (newOpen) {
             onRefresh()
@@ -76,11 +79,7 @@ export function DeviceSelect({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className="p-0"
-          style={{ width: triggerRef.current?.offsetWidth || 'auto' }}
-          align="start"
-        >
+        <PopoverContent className="p-0" style={{ width: triggerWidth || "auto" }} align="start">
           <Command>
             <CommandInput
               placeholder="搜索设备"
@@ -95,7 +94,7 @@ export function DeviceSelect({
                 <CommandEmpty>暂无设备</CommandEmpty>
               ) : (
                 <CommandGroup>
-                  {devices.map((device) => (
+                  {devices.map(device => (
                     <CommandItem
                       key={device.id}
                       value={device.id}
@@ -105,7 +104,9 @@ export function DeviceSelect({
                       }}
                     >
                       <div className="flex flex-col min-w-0 flex-1">
-                        <span className="font-medium truncate" title={device.id}>{device.id}</span>
+                        <span className="font-medium truncate" title={device.id}>
+                          {device.id}
+                        </span>
                         <span className="text-xs text-muted-foreground truncate">
                           {device.model ?? "未知"} · {device.state}
                         </span>
@@ -121,5 +122,3 @@ export function DeviceSelect({
     </div>
   )
 }
-
-

@@ -102,4 +102,3 @@ export function HeaderBar(props: HeaderProps) {
     </header>
   )
 }
-
