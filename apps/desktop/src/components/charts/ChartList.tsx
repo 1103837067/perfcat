@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, Reorder, useDragControls, type DragControls } from "framer-motion"
 import {
   ChartContainer,
   ChartLegend,
@@ -18,6 +18,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Area, AreaChart, Brush, CartesianGrid, XAxis, YAxis } from "recharts"
+import { GripVertical } from "lucide-react"
 
 type BrushState = {
   // 百分比 0-100，避免因数据长度变化导致拖动中断
@@ -33,11 +34,42 @@ type ChartListContextValue = {
 }
 
 const ChartListContext = createContext<ChartListContextValue | null>(null)
+const ChartListItemDragContext = createContext<DragControls | null>(null)
 
 function useChartList() {
   const ctx = useContext(ChartListContext)
   if (!ctx) throw new Error("useChartList must be used inside <ChartList />")
   return ctx
+}
+
+function useChartItemDragControls() {
+  return useContext(ChartListItemDragContext)
+}
+
+function ChartListItem({ id, children }: { id: string; children: ReactNode }) {
+  const dragControls = useDragControls()
+
+  return (
+    <ChartListItemDragContext.Provider value={dragControls}>
+      <Reorder.Item
+        as="div"
+        value={id}
+        dragListener={false}
+        dragControls={dragControls}
+        layout
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{
+          duration: 0.2,
+          ease: "easeOut",
+          layout: { duration: 0.25, ease: "easeInOut" },
+        }}
+      >
+        {children}
+      </Reorder.Item>
+    </ChartListItemDragContext.Provider>
+  )
 }
 
 export function ChartList({
@@ -71,28 +103,44 @@ export function ChartList({
     [children]
   )
 
+  const items = useMemo(() => {
+    return childArray.map((child, index) => {
+      const key = isValidElement(child) && child.key != null ? String(child.key) : String(index)
+      return { id: key, element: child }
+    })
+  }, [childArray])
+
+  const [order, setOrder] = useState<string[]>(() => items.map(i => i.id))
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOrder(prev => {
+      const nextIds = items.map(i => i.id)
+      const kept = prev.filter(id => nextIds.includes(id))
+      const added = nextIds.filter(id => !kept.includes(id))
+      return [...kept, ...added]
+    })
+  }, [items])
+
+  const orderedItems = useMemo(() => {
+    const map = new Map(items.map(i => [i.id, i.element]))
+    return order.map(id => ({ id, element: map.get(id) })).filter(i => i.element != null) as Array<{
+      id: string
+      element: ReactNode
+    }>
+  }, [items, order])
+
   return (
     <ChartListContext.Provider value={value}>
-      <div className="space-y-3">
+      <Reorder.Group as="div" axis="y" values={order} onReorder={setOrder} className="space-y-3">
         <AnimatePresence mode="popLayout">
-          {childArray.map((child, index) => (
-            <motion.div
-              key={isValidElement(child) && child.key != null ? child.key : index}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{
-                duration: 0.2,
-                ease: "easeOut",
-                layout: { duration: 0.25, ease: "easeInOut" },
-              }}
-            >
-              {child}
-            </motion.div>
+          {orderedItems.map(item => (
+            <ChartListItem key={item.id} id={item.id}>
+              {item.element}
+            </ChartListItem>
           ))}
         </AnimatePresence>
-      </div>
+      </Reorder.Group>
     </ChartListContext.Provider>
   )
 }
@@ -123,6 +171,7 @@ export function ChartItem({
   height = 224, // 默认约 56px * 4 = 224px
 }: ChartItemProps) {
   const { brush, setBrush, setDragging } = useChartList()
+  const dragControls = useChartItemDragControls()
   const draggingRef = useRef(false)
   const dragTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [displayData, setDisplayData] = useState(data)
@@ -229,29 +278,37 @@ export function ChartItem({
 
   return (
     <div className="space-y-1">
-      {title ? (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            {icon ? <span className="text-muted-foreground">{icon}</span> : null}
-            <span>{title}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-            {stats.map(stat => (
-              <div key={stat.key} className="flex items-center gap-1">
-                <span
-                  className="inline-flex h-2 w-2 rounded-full"
-                  style={{ backgroundColor: `var(--color-${stat.key})` }}
-                />
-                <span className="text-xs text-foreground/80">{stat.label}</span>
-                <span className="font-medium text-foreground/80">
-                  max {formatNumber(stat.max)} / avg {formatNumber(stat.avg)} / min{" "}
-                  {formatNumber(stat.min)}
-                </span>
-              </div>
-            ))}
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          {icon ? <span className="text-muted-foreground">{icon}</span> : null}
+          {title ? <span>{title}</span> : null}
         </div>
-      ) : null}
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+          {title
+            ? stats.map(stat => (
+                <div key={stat.key} className="flex items-center gap-1">
+                  <span
+                    className="inline-flex h-2 w-2 rounded-full"
+                    style={{ backgroundColor: `var(--color-${stat.key})` }}
+                  />
+                  <span className="text-xs text-foreground/80">{stat.label}</span>
+                  <span className="font-medium text-foreground/80">
+                    max {formatNumber(stat.max)} / avg {formatNumber(stat.avg)} / min{" "}
+                    {formatNumber(stat.min)}
+                  </span>
+                </div>
+              ))
+            : null}
+          <button
+            type="button"
+            className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-foreground/60 hover:bg-muted hover:text-foreground cursor-grab active:cursor-grabbing"
+            aria-label="拖动排序"
+            onPointerDown={event => dragControls?.start(event)}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
       <ChartContainer
         className="w-full rounded-md border bg-card/60 p-2"
         style={{ height }}
