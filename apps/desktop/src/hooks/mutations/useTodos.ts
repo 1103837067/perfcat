@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Database from "@tauri-apps/plugin-sql"
 import { toast } from "sonner"
 import type { CreateTodoInput, Todo, UpdateTodoInput } from "@/types/todo"
@@ -21,15 +21,9 @@ async function initDatabase() {
   return db
 }
 
-// 获取所有 todos
-async function getTodos(): Promise<Todo[]> {
-  const db = await Database.load(DB_NAME)
-  const todos = await db.select<Todo[]>("SELECT * FROM todos ORDER BY created_at DESC")
-  return todos
-}
-
 // 创建 todo
 async function createTodo(input: CreateTodoInput): Promise<Todo> {
+  await initDatabase()
   const db = await Database.load(DB_NAME)
 
   const result = await db.execute("INSERT INTO todos (title, completed) VALUES ($1, $2)", [
@@ -44,6 +38,7 @@ async function createTodo(input: CreateTodoInput): Promise<Todo> {
 
 // 更新 todo
 async function updateTodo(id: number, input: UpdateTodoInput): Promise<Todo> {
+  await initDatabase()
   const db = await Database.load(DB_NAME)
 
   const updates: string[] = []
@@ -75,18 +70,9 @@ async function updateTodo(id: number, input: UpdateTodoInput): Promise<Todo> {
 
 // 删除 todo
 async function deleteTodo(id: number): Promise<void> {
+  await initDatabase()
   const db = await Database.load(DB_NAME)
   await db.execute("DELETE FROM todos WHERE id = $1", [id])
-}
-
-export function useTodos() {
-  return useQuery({
-    queryKey: ["todos"],
-    queryFn: async () => {
-      await initDatabase()
-      return getTodos()
-    },
-  })
 }
 
 export function useCreateTodo() {

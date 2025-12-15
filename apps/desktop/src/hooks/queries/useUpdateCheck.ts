@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 
 const REPO = "SolidQA/PerfX"
-const STORAGE_KEY = "perfx:lastUpdateCheck"
 
 type UpdateInfo = {
   hasUpdate: boolean
@@ -68,7 +67,6 @@ export function useUpdateCheck(currentVersion: string) {
         const data: { tag_name?: string; html_url?: string } = await res.json()
         const latest = data.tag_name ? normalizeVersion(data.tag_name) : null
         const url = data.html_url || null
-        window.localStorage.setItem(STORAGE_KEY, String(Date.now()))
 
         if (canceled) return
         if (latest && url && compareSemver(latest, currentVersion) > 0) {

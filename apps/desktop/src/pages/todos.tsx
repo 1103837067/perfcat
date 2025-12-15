@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Trash2, Plus } from "lucide-react"
-import { useTodos, useCreateTodo, useUpdateTodo, useDeleteTodo } from "@/hooks/use-todo"
+import { useTodos } from "@/hooks/queries/useTodos"
+import { useCreateTodo, useUpdateTodo, useDeleteTodo } from "@/hooks/mutations/useTodos"
 import { cn } from "@/lib/utils"
 
 export function TodosPage() {

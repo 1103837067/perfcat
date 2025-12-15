@@ -5,13 +5,15 @@ import { Minus, Maximize2, X, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getPlatform } from "@/lib/platform"
 import { useAppStore } from "@/stores/use-app-store"
-import { useUpdateCheck } from "@/hooks/useUpdateCheck"
+import { useDeviceStore } from "@/stores/use-device-store"
+import { useUpdateCheck } from "@/hooks/queries/useUpdateCheck"
 
 const appWindow = getCurrentWindow()
 
 export function TitleBar() {
   const [platform, setPlatform] = useState<"macos" | "windows" | "linux">("macos")
-  const { theme, setTheme, selectedDevice } = useAppStore()
+  const { theme, setTheme } = useAppStore()
+  const { selectedDevice } = useDeviceStore()
   const version = __APP_VERSION__
   const update = useUpdateCheck(version)
 

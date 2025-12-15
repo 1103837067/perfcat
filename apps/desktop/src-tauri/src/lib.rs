@@ -11,6 +11,8 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_sql::Builder::default().build())
     .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_fs::init())
     .plugin(
       tauri_plugin_log::Builder::new()
         .level(log::LevelFilter::Info)
@@ -33,6 +35,7 @@ pub fn run() {
       commands::tauri_list_devices,
       commands::tauri_list_apps,
       commands::tauri_get_metrics,
+      commands::tauri_execute_adb_command,
       commands::tauri_set_adb_path
     ])
     .setup(|app| {

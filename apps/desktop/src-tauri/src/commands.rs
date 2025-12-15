@@ -1,4 +1,5 @@
 use crate::adb::{
+  command::{run_device, run_host},
   collect_metrics, list_apps, list_devices, set_adb_path, AppInfo, DeviceInfo, MetricKey,
   MetricsSnapshot,
 };
@@ -57,6 +58,26 @@ pub async fn tauri_get_metrics(payload: MetricsPayload) -> Result<MetricsSnapsho
     .await
     .map_err(|e| e.to_string())?
     .map_err(|e| e.to_string())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExecuteAdbCommandPayload {
+  pub device_id: Option<String>,
+  pub args: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn tauri_execute_adb_command(payload: ExecuteAdbCommandPayload) -> Result<String, String> {
+  spawn_blocking(move || {
+    if let Some(device_id) = payload.device_id {
+      run_device(&device_id, &payload.args.iter().map(|s| s.as_str()).collect::<Vec<_>>())
+    } else {
+      run_host(&payload.args.iter().map(|s| s.as_str()).collect::<Vec<_>>())
+    }
+  })
+  .await
+  .map_err(|e| format!("异步执行错误: {}", e.to_string()))?
+  .map_err(|e| format!("ADB命令执行失败: {}", e.to_string()))
 }
 
 #[tauri::command]

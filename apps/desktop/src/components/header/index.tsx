@@ -1,103 +1,57 @@
-import { AppSelect } from "@/components/sidebar/AppSelect"
-import { CommandBar } from "@/components/sidebar/CommandBar"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DeviceSelect } from "@/components/sidebar/DeviceSelect"
-import { MetricSelector } from "@/components/sidebar/MetricSelector"
-import type { AdbApp, AdbDevice, MetricKey } from "@/types/adb"
+import { Activity, FileText, Smartphone } from "lucide-react"
+import { useState } from "react"
+import { useAdbDevices } from "@/hooks/queries/useAdbDevices"
+import { useDeviceStore } from "@/stores/use-device-store"
 
-interface HeaderProps {
-  deviceId: string
-  devices: AdbDevice[]
-  deviceSearch: string
-  loadingDevices: boolean
-  onDeviceChange: (value: string) => void
-  onDeviceSearch: (value: string) => void
-  onRefreshDevices: () => void
-
-  appId: string
-  apps: AdbApp[]
-  appSearch: string
-  loadingApps: boolean
-  appError?: string | null
-  onRefreshApps: () => void
-  onAppChange: (value: string) => void
-  onAppSearch: (value: string) => void
-
-  metrics: MetricKey[]
-  onMetricsChange: (value: MetricKey[]) => void
-
-  running: boolean
-  onStart: () => void
-  onStop: () => void
+interface TabbedHeaderProps {
+  activeTab: string
+  onTabChange: (tab: string) => void
 }
 
-export function HeaderBar(props: HeaderProps) {
-  const {
-    deviceId,
-    devices,
-    deviceSearch,
-    loadingDevices,
-    onDeviceChange,
-    onDeviceSearch,
-    onRefreshDevices,
-    appId,
-    apps,
-    appSearch,
-    loadingApps,
-    appError,
-    onRefreshApps,
-    onAppChange,
-    onAppSearch,
-    metrics,
-    onMetricsChange,
-    running,
-    onStart,
-    onStop,
-  } = props
+export function TabbedHeader({ activeTab, onTabChange }: TabbedHeaderProps) {
+  const { selectedDevice, setSelectedDevice } = useDeviceStore()
+  const [deviceSearch, setDeviceSearch] = useState("")
+  const { devices, loading: loadingDevices, refresh: refreshDevices } = useAdbDevices()
+
+  const handleDeviceChange = (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId) ?? null
+    setSelectedDevice(device)
+    refreshDevices()
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-      <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap items-start gap-3">
-          <div className="flex min-w-[280px] flex-1 flex-wrap items-start gap-3">
-            <div className="w-full min-w-[220px] sm:w-64">
-              <DeviceSelect
-                value={deviceId}
-                devices={devices}
-                search={deviceSearch}
-                loading={loadingDevices}
-                onChange={onDeviceChange}
-                onSearch={onDeviceSearch}
-                onRefresh={onRefreshDevices}
-              />
-            </div>
-
-            <div className="w-full min-w-[220px] sm:w-64">
-              <AppSelect
-                value={appId}
-                apps={apps}
-                search={appSearch}
-                loading={loadingApps}
-                error={appError}
-                onRefresh={onRefreshApps}
-                disabled={!deviceId}
-                onChange={onAppChange}
-                onSearch={onAppSearch}
-              />
-            </div>
-          </div>
-
-          <div className="w-full min-w-[240px] flex-shrink-0 sm:ml-auto sm:w-[260px]">
-            <CommandBar
-              disabled={!deviceId || !appId || metrics.length === 0}
-              running={running}
-              onStart={onStart}
-              onStop={onStop}
-              metricSelector={
-                <MetricSelector value={metrics} onChange={onMetricsChange} disabled={running} />
-              }
-            />
-          </div>
+      <div className="flex items-center justify-between p-4">
+        <div className="w-64">
+          <DeviceSelect
+            value={selectedDevice?.id || ""}
+            devices={devices}
+            search={deviceSearch}
+            loading={loadingDevices}
+            onChange={handleDeviceChange}
+            onSearch={setDeviceSearch}
+            onRefresh={refreshDevices}
+          />
         </div>
+
+        <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="performance" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              性能监控
+            </TabsTrigger>
+            <TabsTrigger value="device" className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4" />
+              设备信息
+            </TabsTrigger>
+            <TabsTrigger value="report" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              报告
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
     </header>
   )

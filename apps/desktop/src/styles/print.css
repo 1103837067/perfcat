@@ -1,0 +1,63 @@
+/* 打印样式 - 确保PDF导出时正确显示 */
+
+@media print {
+  /* 隐藏不需要打印的元素 */
+  .no-print {
+    display: none !important;
+  }
+
+  /* 确保颜色正确打印 */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* 确保SVG图表正确渲染 */
+  svg {
+    max-width: 100%;
+    height: auto;
+    page-break-inside: avoid;
+  }
+
+  /* 确保表格正确显示 */
+  table {
+    page-break-inside: avoid;
+    border-collapse: collapse;
+  }
+
+  /* 确保图表容器正确显示 */
+  [data-chart] {
+    page-break-inside: avoid;
+  }
+
+  /* 分页控制 */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .page-break-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* 确保文本可读性 */
+  body {
+    background: white;
+    color: black;
+  }
+
+  /* 确保分隔线可见 */
+  hr,
+  .separator {
+    border-color: #e5e7eb;
+  }
+}
+

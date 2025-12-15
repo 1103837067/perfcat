@@ -30,6 +30,15 @@ export async function getMetrics(payload: MetricsPayload) {
   })
 }
 
+export async function executeAdbCommand(deviceId: string | null, args: string[]) {
+  return invoke<string>("tauri_execute_adb_command", {
+    payload: {
+      device_id: deviceId,
+      args,
+    },
+  })
+}
+
 export async function setAdbPath(path?: string) {
   return invoke<void>("tauri_set_adb_path", { path })
 }
