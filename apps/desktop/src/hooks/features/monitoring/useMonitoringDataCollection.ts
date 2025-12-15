@@ -31,11 +31,6 @@ export function useMonitoringDataCollection() {
 
   // 收集实时指标历史
   useEffect(() => {
-    console.log("useMonitoringDataCollection effect", {
-      metrics: !!metrics,
-      running,
-      metricsData: metrics,
-    })
     if (!metrics || !running) return
 
     const now = Date.now()
@@ -88,10 +83,8 @@ export function useMonitoringDataCollection() {
         traffic_tx: traffic_tx ?? 0,
       }
 
-      console.log("添加数据点", newDataPoint)
       setChartData(prev => {
         const newData = [...prev, newDataPoint].slice(-600)
-        console.log("chartData更新", { prevLength: prev.length, newLength: newData.length })
         return newData
       })
     }

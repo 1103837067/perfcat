@@ -24,7 +24,6 @@ export function useMonitoringControl(
     useMonitoringStore()
 
   const handleStart = useCallback(() => {
-    console.log("handleStart调用", { selectedDevice, selectedApp, selectedMetrics })
     if (!selectedDevice || !selectedApp || selectedMetrics.length === 0) {
       console.warn("handleStart: 缺少必要参数", {
         selectedDevice: !!selectedDevice,
@@ -41,15 +40,8 @@ export function useMonitoringControl(
       ])
     )
 
-    console.log("开始监控", {
-      deviceId: selectedDevice.id,
-      packageName: selectedApp,
-      metrics: metricsToRequest,
-    })
     setStartTime(Math.floor(Date.now() / 1000))
-    console.log("设置running=true")
     setRunning(true)
-    console.log("调用start函数")
 
     start({
       deviceId: selectedDevice.id,
@@ -57,7 +49,6 @@ export function useMonitoringControl(
       metrics: metricsToRequest,
       intervalMs: 1000,
     })
-    console.log("start函数调用完成")
   }, [selectedDevice, selectedApp, selectedMetrics, start, setStartTime, setRunning])
 
   const handleStop = useCallback(() => {

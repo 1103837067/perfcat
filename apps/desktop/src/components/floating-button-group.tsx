@@ -15,12 +15,8 @@ interface FloatingButtonGroupProps {
 }
 
 export function FloatingButtonGroup({ onStart, onStop, running }: FloatingButtonGroupProps) {
-  console.log("FloatingButtonGroup running prop", running)
   const { selectedDevice } = useDeviceStore()
   const { selectedApp, selectedMetrics, setSelectedApp, setSelectedMetrics } = useMonitoringStore()
-  // 直接从store读取running作为对比
-  const storeRunning = useMonitoringStore(state => state.running)
-  console.log("FloatingButtonGroup storeRunning", storeRunning)
   const [appSearch, setAppSearch] = useState("")
   const prevDeviceRef = useRef<string | null>(null)
 
@@ -99,18 +95,9 @@ export function FloatingButtonGroup({ onStart, onStop, running }: FloatingButton
         size="sm"
         className="h-10 w-10 rounded-full"
         onClick={() => {
-          console.log("按钮点击", {
-            running,
-            disabled,
-            selectedDevice: !!selectedDevice,
-            selectedApp,
-            selectedMetrics,
-          })
           if (running) {
-            console.log("调用onStop")
             onStop()
           } else {
-            console.log("调用onStart")
             onStart()
           }
         }}

@@ -12,9 +12,6 @@ export function HomePage() {
   const { activeTab, setActiveTab } = useAppStore()
   const { handleStart, handleStop, running } = useMonitoring()
 
-  // 调试：检查running状态
-  console.log("HomePage running状态", running)
-
   // 处理设备变化副作用
   useDeviceEffects()
 

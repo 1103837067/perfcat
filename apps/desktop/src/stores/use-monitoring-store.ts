@@ -75,9 +75,7 @@ export const useMonitoringStore = create<MonitoringState>()(
         })),
       setStartTime: time => set({ startTime: time }),
       setRunning: running => {
-        console.log("setRunning调用", running, "当前state:", useMonitoringStore.getState())
         set({ running })
-        console.log("setRunning调用后，state:", useMonitoringStore.getState())
       },
       setMetrics: metrics => set({ metrics, metricsError: null }),
       setMetricsError: error => set({ metricsError: error }),

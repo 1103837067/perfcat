@@ -9,6 +9,14 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useReports } from "@/hooks/queries/useReports"
 import { useDeleteReport } from "@/hooks/mutations/useReports"
 import { ReportDetailPage } from "@/pages/report-detail-page"
@@ -19,6 +27,8 @@ import { toast } from "sonner"
 export function ReportPage() {
   const [viewMode, setViewMode] = useState<"list" | "detail">("list")
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [reportToDelete, setReportToDelete] = useState<number | null>(null)
   const { data: reports, isLoading } = useReports()
   const deleteReport = useDeleteReport()
 
@@ -34,8 +44,17 @@ export function ReportPage() {
 
   const handleDelete = (e: React.MouseEvent, reportId: number) => {
     e.stopPropagation()
-    deleteReport.mutate(reportId)
-    toast.success("报告已删除")
+    setReportToDelete(reportId)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (reportToDelete !== null) {
+      deleteReport.mutate(reportToDelete)
+      toast.success("报告已删除")
+      setDeleteDialogOpen(false)
+      setReportToDelete(null)
+    }
   }
 
   const formatDuration = (seconds: number) => {
@@ -125,6 +144,30 @@ export function ReportPage() {
             </TableBody>
           </Table>
         )}
+
+        {/* 删除确认弹框 */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>确认删除</DialogTitle>
+              <DialogDescription>确定要删除此报告吗？此操作无法撤销。</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false)
+                  setReportToDelete(null)
+                }}
+              >
+                取消
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                删除
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </ScrollArea>
   )
