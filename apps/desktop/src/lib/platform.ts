@@ -29,6 +29,6 @@ export async function openExternalUrl(url: string): Promise<void> {
   } catch (error) {
     console.error("Failed to open external URL:", error)
     // 降级到使用window.open
-    window.open(url, '_blank', 'noopener,noreferrer')
+    window.open(url, "_blank", "noopener,noreferrer")
   }
 }

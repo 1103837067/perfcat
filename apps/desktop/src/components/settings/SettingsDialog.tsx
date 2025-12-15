@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator"
 import { RefreshCw, Github, CheckCircle, AlertCircle, Settings, Info } from "lucide-react"
 import { useUpdateCheck } from "@/hooks/queries/useUpdateCheck"
 import { openExternalUrl } from "@/lib/platform"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 
 interface SettingsDialogProps {
   open: boolean
@@ -18,7 +18,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     name: "PerfX",
     version: __APP_VERSION__,
     author: "SolidQA",
-    githubUrl: "https://github.com/SolidQA/PerfX"
+    githubUrl: "https://github.com/SolidQA/PerfX",
   }
 
   // 使用自动更新检查 hook
@@ -31,7 +31,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   const sections = [
     { id: "general", label: "通用", icon: Settings },
-    { id: "about", label: "关于", icon: Info }
+    { id: "about", label: "关于", icon: Info },
   ]
 
   const handleOpenGitHub = () => {
@@ -45,14 +45,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       const element = sectionRefs.current[section.id]
       return {
         id: section.id,
-        offset: element ? element.offsetTop : 0
+        offset: element ? element.offsetTop : 0,
       }
     })
 
     // 找到当前滚动位置对应的章节
     let currentSection = sections[0].id
     for (let i = sectionOffsets.length - 1; i >= 0; i--) {
-      if (scrollTop >= sectionOffsets[i].offset - 100) { // 100px的偏移量
+      if (scrollTop >= sectionOffsets[i].offset - 100) {
+        // 100px的偏移量
         currentSection = sectionOffsets[i].id
         break
       }
@@ -65,20 +66,17 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const scrollToSection = (sectionId: string) => {
     const element = sectionRefs.current[sectionId]
     if (element && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      )
       if (scrollContainer) {
         scrollContainer.scrollTo({
           top: element.offsetTop,
-          behavior: 'smooth'
+          behavior: "smooth",
         })
       }
     }
   }
-
-  // 初始化时设置默认章节
-  useEffect(() => {
-    setActiveSection("general")
-  }, [])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +88,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <div className="flex gap-6 h-96">
           {/* 左侧导航 */}
           <div className="w-48 space-y-1">
-            {sections.map((section) => {
+            {sections.map(section => {
               const Icon = section.icon
               return (
                 <button
@@ -111,15 +109,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
           {/* 右侧滚动内容 */}
           <div className="flex-1">
-            <ScrollArea
-              ref={scrollAreaRef}
-              className="h-full"
-              onScroll={handleScroll}
-            >
+            <ScrollArea ref={scrollAreaRef} className="h-full" onScroll={handleScroll}>
               <div className="pr-4 space-y-8">
                 {/* 通用章节 */}
                 <div
-                  ref={(el) => {
+                  ref={el => {
                     sectionRefs.current.general = el
                   }}
                   className="space-y-4"
@@ -132,7 +126,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                 {/* 关于章节 */}
                 <div
-                  ref={(el) => {
+                  ref={el => {
                     sectionRefs.current.about = el
                   }}
                   className="space-y-6"
@@ -184,11 +178,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       )}
                     </div>
 
-                    <Button
-                      variant="outline"
-                      onClick={handleOpenGitHub}
-                      className="w-full gap-2"
-                    >
+                    <Button variant="outline" onClick={handleOpenGitHub} className="w-full gap-2">
                       <Github className="h-4 w-4" />
                       访问GitHub
                     </Button>

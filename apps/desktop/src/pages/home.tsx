@@ -31,7 +31,6 @@ export function HomePage() {
           </TabsContent>
         </Tabs>
       </main>
-
     </div>
   )
 }

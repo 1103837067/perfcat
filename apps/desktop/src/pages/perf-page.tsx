@@ -8,14 +8,30 @@ import { useAdbApps } from "@/hooks/queries/useAdbApps"
 import { useMonitoring } from "@/hooks/features/monitoring/useMonitoring"
 import { AppSelect } from "@/components/sidebar/AppSelect"
 import { MetricSelector } from "@/components/sidebar/MetricSelector"
-import { Cpu, Gauge, Zap, Database, ArrowUpDown, AppWindow, Play, Square, Settings } from "lucide-react"
+import {
+  Cpu,
+  Gauge,
+  Zap,
+  Database,
+  ArrowUpDown,
+  AppWindow,
+  Play,
+  Square,
+  Settings,
+} from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
 export function PerfPage() {
-  const { chartData, selectedMetrics, selectedApp, setSelectedApp, setSelectedMetrics } = useMonitoringStore()
+  const { chartData, selectedMetrics, selectedApp, setSelectedApp, setSelectedMetrics } =
+    useMonitoringStore()
   const { selectedDevice } = useDeviceStore()
   const { handleStart, handleStop, running } = useMonitoring()
-  const { apps, loading: loadingApps, error: appError, refresh: refreshApps } = useAdbApps(selectedDevice?.id || null)
+  const {
+    apps,
+    loading: loadingApps,
+    error: appError,
+    refresh: refreshApps,
+  } = useAdbApps(selectedDevice?.id || null)
 
   // 获取当前测试应用的显示信息
   const currentApp = apps.find(app => app.package === selectedApp)
@@ -31,6 +47,7 @@ export function PerfPage() {
     const prev = prevDeviceRef.current
     const current = selectedDevice?.id || null
     if (prev !== null && prev !== current) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setAppSearch("")
     }
     prevDeviceRef.current = current

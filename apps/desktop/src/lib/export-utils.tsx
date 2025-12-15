@@ -182,90 +182,85 @@ export async function exportToPDF(element: HTMLElement, filename: string): Promi
     throw new Error("没有可导出的内容")
   }
 
-  try {
-    // 使用 html2canvas 将DOM转换为canvas
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#ffffff",
-      allowTaint: false,
-      onclone: clonedDoc => {
-        // 在克隆的文档中替换样式表中的 oklch 颜色
-        replaceOklchInStylesheets(clonedDoc)
+  // 使用 html2canvas 将DOM转换为canvas
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: "#ffffff",
+    allowTaint: false,
+    onclone: clonedDoc => {
+      // 在克隆的文档中替换样式表中的 oklch 颜色
+      replaceOklchInStylesheets(clonedDoc)
 
-        // 隐藏不需要打印的元素（只在克隆文档中）
-        const clonedNoPrint = clonedDoc.querySelectorAll(".no-print")
-        clonedNoPrint.forEach(el => {
-          if (el instanceof HTMLElement) {
-            el.style.display = "none"
-          }
-        })
-      },
-    })
+      // 隐藏不需要打印的元素（只在克隆文档中）
+      const clonedNoPrint = clonedDoc.querySelectorAll(".no-print")
+      clonedNoPrint.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.display = "none"
+        }
+      })
+    },
+  })
 
-    // 将canvas转换为图片数据
-    const imgData = canvas.toDataURL("image/png")
+  // 将canvas转换为图片数据
+  const imgData = canvas.toDataURL("image/png")
 
-    // 创建PDF
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    })
+  // 创建PDF
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  })
 
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = canvas.width
-    const imgHeight = canvas.height
+  const pdfWidth = pdf.internal.pageSize.getWidth()
+  const pdfHeight = pdf.internal.pageSize.getHeight()
+  const imgWidth = canvas.width
+  const imgHeight = canvas.height
 
-    // 计算缩放比例，确保图片适合PDF页面宽度
-    const ratio = pdfWidth / imgWidth
-    const imgScaledWidth = pdfWidth
-    const imgScaledHeight = imgHeight * ratio
+  // 计算缩放比例，确保图片适合PDF页面宽度
+  const ratio = pdfWidth / imgWidth
+  const imgScaledWidth = pdfWidth
+  const imgScaledHeight = imgHeight * ratio
 
-    // 计算水平居中位置
-    const xOffset = 0
+  // 计算水平居中位置
+  const xOffset = 0
 
-    // 如果内容超过一页，需要分页
-    let heightLeft = imgScaledHeight
-    let position = 0
+  // 如果内容超过一页，需要分页
+  let heightLeft = imgScaledHeight
+  let position = 0
 
-    // 添加第一页
+  // 添加第一页
+  pdf.addImage(imgData, "PNG", xOffset, position, imgScaledWidth, imgScaledHeight)
+  heightLeft -= pdfHeight
+
+  // 如果内容超过一页，添加更多页面
+  while (heightLeft > 0) {
+    position = position - pdfHeight
+    pdf.addPage()
     pdf.addImage(imgData, "PNG", xOffset, position, imgScaledWidth, imgScaledHeight)
     heightLeft -= pdfHeight
+  }
 
-    // 如果内容超过一页，添加更多页面
-    while (heightLeft > 0) {
-      position = position - pdfHeight
-      pdf.addPage()
-      pdf.addImage(imgData, "PNG", xOffset, position, imgScaledWidth, imgScaledHeight)
-      heightLeft -= pdfHeight
-    }
+  // 生成PDF二进制数据
+  const pdfBlob = pdf.output("blob")
+  const pdfArrayBuffer = await pdfBlob.arrayBuffer()
+  const pdfUint8Array = new Uint8Array(pdfArrayBuffer)
 
-    // 生成PDF二进制数据
-    const pdfBlob = pdf.output("blob")
-    const pdfArrayBuffer = await pdfBlob.arrayBuffer()
-    const pdfUint8Array = new Uint8Array(pdfArrayBuffer)
+  // 使用Tauri dialog保存文件
+  const filePath = await save({
+    defaultPath: `${filename}.pdf`,
+    filters: [
+      {
+        name: "PDF",
+        extensions: ["pdf"],
+      },
+    ],
+  })
 
-    // 使用Tauri dialog保存文件
-    const filePath = await save({
-      defaultPath: `${filename}.pdf`,
-      filters: [
-        {
-          name: "PDF",
-          extensions: ["pdf"],
-        },
-      ],
-    })
-
-    if (filePath) {
-      await writeFile(filePath, pdfUint8Array)
-    } else {
-      throw new Error("用户取消了文件保存")
-    }
-  } catch (error) {
-    // 重新抛出错误，让调用方处理
-    throw error
+  if (filePath) {
+    await writeFile(filePath, pdfUint8Array)
+  } else {
+    throw new Error("用户取消了文件保存")
   }
 }

@@ -52,11 +52,11 @@ export function generateReportName(
 ): string {
   const now = new Date()
   const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hour = String(now.getHours()).padStart(2, '0')
-  const minute = String(now.getMinutes()).padStart(2, '0')
-  const second = String(now.getSeconds()).padStart(2, '0')
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  const hour = String(now.getHours()).padStart(2, "0")
+  const minute = String(now.getMinutes()).padStart(2, "0")
+  const second = String(now.getSeconds()).padStart(2, "0")
 
   const timestamp = `${year}年${month}月${day}日${hour}时${minute}分${second}秒`
   return `${deviceModel || deviceId}-${appLabel || appPackage}-${timestamp}`
